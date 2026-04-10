@@ -19,6 +19,17 @@ function runGame(): Phaser.Game {
 			autoCenter: Phaser.Scale.CENTER_BOTH,
 		},
 		scene: scene_list,
+
+		physics: {
+			default: "arcade",
+			arcade: {
+				debug:
+					import.meta.env.PROD === false &&
+					typeof import.meta.env.VITE_GAME_DEBUG === "string" &&
+					import.meta.env.VITE_GAME_DEBUG.toLowerCase() === "true",
+			},
+		},
+		pixelArt: true,
 	};
 
 	const game = new Phaser.Game(config);
