@@ -47,8 +47,8 @@ function create_player_input_zone(
 }
 
 export default class PrototypeLevel extends Phaser.Scene {
-	player: Phaser.Physics.Arcade.Sprite;
-	tapZone: Phaser.GameObjects.Zone;
+	player!: Phaser.Physics.Arcade.Sprite;
+	tapZone!: Phaser.GameObjects.Zone;
 
 	constructor() {
 		super(CFG.SCENE_KEYS.prototype);
