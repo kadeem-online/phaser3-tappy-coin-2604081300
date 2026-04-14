@@ -129,6 +129,26 @@ class ObstaclePoolManager extends Phaser.Physics.Arcade.Group {
 	_generate_obstacle_texture() {}
 }
 
+class PrototypeEventManager extends Phaser.Events.EventEmitter {
+	static #instance: PrototypeEventManager;
+
+	private constructor() {
+		super();
+	}
+
+	public get_instance(): PrototypeEventManager {
+		if (!PrototypeEventManager.#instance) {
+			PrototypeEventManager.#instance = new PrototypeEventManager();
+		}
+
+		return PrototypeEventManager.#instance;
+	}
+
+	destroy() {
+		super.destroy();
+	}
+}
+
 export default class PrototypeLevel extends Phaser.Scene {
 	player!: Phaser.Physics.Arcade.Sprite;
 	tapZone!: Phaser.GameObjects.Zone;
