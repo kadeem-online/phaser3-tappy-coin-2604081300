@@ -136,7 +136,7 @@ class PrototypeEventManager extends Phaser.Events.EventEmitter {
 		super();
 	}
 
-	public get_instance(): PrototypeEventManager {
+	public static get_instance(): PrototypeEventManager {
 		if (!PrototypeEventManager.#instance) {
 			PrototypeEventManager.#instance = new PrototypeEventManager();
 		}
