@@ -21,6 +21,9 @@ function create_player(scene: Phaser.Scene): Phaser.Physics.Arcade.Sprite {
 
 	const player = scene.physics.add.sprite(0, 0, texture_key, 0);
 	player.setCircle(16);
+	player.body.onWorldBounds = true;
+
+	player.setData("isAlive", false);
 	return player;
 }
 
@@ -149,13 +152,18 @@ class PrototypeEventManager extends Phaser.Events.EventEmitter {
 	}
 }
 
+type GameStates = "PRE_GAME" | "RUNNING" | "POST_GAME";
+
 export default class PrototypeLevel extends Phaser.Scene {
 	player!: Phaser.Physics.Arcade.Sprite;
 	tapZone!: Phaser.GameObjects.Zone;
 	obstaclePool!: ObstaclePoolManager;
+	gameState: GameStates = "PRE_GAME";
+	eventManager: PrototypeEventManager;
 
 	constructor() {
 		super(CFG.SCENE_KEYS.prototype);
+		this.eventManager = PrototypeEventManager.get_instance();
 	}
 
 	create() {
@@ -170,11 +178,158 @@ export default class PrototypeLevel extends Phaser.Scene {
 		this.tapZone.on("pointerdown", this.handleTapZoneInput, this);
 
 		this.obstaclePool = new ObstaclePoolManager(this);
+
+		this.physics.world.on(
+			"worldbounds",
+			this.handleWorldBoundsCollisions,
+			this,
+		);
+
+		this.eventManager.on("gamestatechange", this.handleGameStateChange, this);
+
+		// start game
+		this.setGameState("RUNNING");
+	}
+
+	/**
+	 * Handler for the game state changes of the 'gamestatechange' event attached
+	 * to the eventManager.
+	 *
+	 * @param {GameStates} prevState - the last game state.
+	 * @param {GameState} currentState - the new current game state.
+	 */
+	handleGameStateChange(prevState: GameStates, currentState: GameStates) {
+		switch (currentState) {
+			case "PRE_GAME":
+				this.handleGameState_PRE_GAME(prevState);
+				break;
+
+			case "RUNNING":
+				this.handleGameState_RUNNING(prevState);
+				break;
+
+			case "POST_GAME":
+				this.handleGameState_POST_GAME(prevState);
+				break;
+
+			default:
+				break;
+		}
+
+		// DEBUG
+		if (import.meta.env.VITE_GAME_DEBUG === "true") {
+			console.log(
+				`new game state: ${currentState}, last game state: ${prevState}`,
+			);
+		}
+
+		return;
+	}
+
+	/**
+	 * Handles entering the PRE_GAME game state.
+	 *
+	 * @param {GameStates} _previousState - the last game state.
+	 */
+	private handleGameState_PRE_GAME(_previousState: GameStates) {}
+
+	/**
+	 * Handles entering the POST_GMAE game state.
+	 *
+	 * @param {GameStates} _previousState - the last game state.
+	 */
+	private handleGameState_POST_GAME(_previousState: GameStates) {}
+
+	/**
+	 * Handles entering the RUNNING game state.
+	 *
+	 * @param {GameStates} _previousState - the last game state.
+	 */
+	private handleGameState_RUNNING(_previousState: GameStates) {
+		this.startGame();
+	}
+
+	/**
+	 * Handles all collisions with the world boundary by arcade physics bodies.
+	 *
+	 * @param {Phaser.Physics.Arcade.Body} body - the body colliding with the
+	 * world bounds.
+	 */
+	handleWorldBoundsCollisions(
+		body: Phaser.Physics.Arcade.Body,
+		_up: boolean,
+		_down: boolean,
+		_left: boolean,
+		_right: boolean,
+	) {
+		// handle player and world bounds collision.
+		if (this.gameState === "RUNNING" && body.gameObject === this.player) {
+			this.setGameState("POST_GAME");
+			return;
+		}
 	}
 
 	handleTapZoneInput() {
+		// GUARD: only handle player movement if in RUNNING game state.
+		if (this.gameState !== "RUNNING") {
+			return;
+		}
+
 		const tapVelocity: number = -50;
 		this.player.setVelocityY(tapVelocity);
 		return;
+	}
+
+	/**
+	 * Utility for changing the game state, emits a 'gamestatechange' event on
+	 * the PrototypeLevel.eventManager event emitter.
+	 *
+	 * @param {GameStates} state
+	 */
+	setGameState(state: GameStates) {
+		if (this.gameState === state) {
+			return;
+		}
+
+		const prevState = this.gameState;
+		const nextState = state;
+
+		this.gameState = nextState;
+		this.eventManager.emit("gamestatechange", prevState, nextState);
+		return;
+	}
+
+	/**
+	 *
+	 * Handles any setup required before starting the main game loop;
+	 *
+	 */
+	prepareGame() {
+		const PlayerStartPosition: Phaser.Math.Vector2 = new Phaser.Math.Vector2(
+			this.player.width * 1.5,
+			this.scale.height / 2,
+		);
+
+		this.player.setPosition(PlayerStartPosition.x, PlayerStartPosition.y);
+		this.player.setGravityY(0);
+	}
+
+	/**
+	 * handles starting the main game loop.
+	 */
+	startGame() {
+		const PlayerGravity: number = 100;
+
+		this.player.setData("isAlive", true);
+		this.player.setGravityY(PlayerGravity);
+	}
+
+	/**
+	 *
+	 * handles ending the main game loop.
+	 *
+	 */
+	endGame() {
+		this.player.setData("isAlive", false);
 	}
 }
