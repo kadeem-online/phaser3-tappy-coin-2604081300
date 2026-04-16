@@ -116,7 +116,7 @@ class ObstaclePoolManager extends Phaser.Physics.Arcade.Group {
 
 		super(scene.physics.world, scene, {
 			classType: Obstacle,
-			key: KEY,
+			defaultKey: KEY,
 			maxSize: MAX_POOL_SIZE,
 			active: false,
 			visible: false,
