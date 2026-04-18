@@ -123,13 +123,25 @@ class ObstaclePoolManager extends Phaser.Physics.Arcade.Group {
 			quantity: 0,
 			createCallback: obstalce_pool_manager_create_callback,
 		});
-		this._generate_obstacle_texture();
 	}
 
 	/**
-	 * Creates the temporary obstacle texture if it does not yet exist.
+	 * Returns a text description of the ObstaclePoolManger's maximum size,
+	 * current size, number of active items and number of inactive items.
+	 *
+	 * @returns {string}
 	 */
-	_generate_obstacle_texture() {}
+	describe(): string {
+		const maxSize = this.maxSize;
+		const currentSize = this.getLength();
+		const currentActive = this.countActive(true);
+		const currentInactive = this.countActive(false);
+
+		return (
+			`MaxSize: ${maxSize}, CurrentSize: ${currentSize}, Active: ` +
+			`${currentActive}, Inactive: ${currentInactive}`
+		);
+	}
 }
 
 class PrototypeEventManager extends Phaser.Events.EventEmitter {
