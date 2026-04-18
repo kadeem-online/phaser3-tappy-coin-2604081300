@@ -10,6 +10,12 @@ import Phaser from "phaser";
 // local application imports
 import * as CFG from "../config.ts";
 
+type ArcadeColliderObject =
+	| Phaser.Types.Physics.Arcade.GameObjectWithBody
+	| Phaser.Physics.Arcade.Body
+	| Phaser.Physics.Arcade.StaticBody
+	| Phaser.Tilemaps.Tile;
+
 function create_player(scene: Phaser.Scene): Phaser.Physics.Arcade.Sprite {
 	const graphics = scene.add.graphics();
 	graphics.fillStyle(0xefefef, 1);
@@ -192,6 +198,7 @@ export default class PrototypeLevel extends Phaser.Scene {
 	obstaclePool!: ObstaclePoolManager;
 	gameState: GameStates = "PRE_GAME";
 	eventManager: PrototypeEventManager;
+	obstacleDespawner!: Phaser.Physics.Arcade.StaticBody;
 
 	constructor() {
 		super(CFG.SCENE_KEYS.prototype);
@@ -210,6 +217,21 @@ export default class PrototypeLevel extends Phaser.Scene {
 		this.tapZone.on("pointerdown", this.handleTapZoneInput, this);
 
 		this.obstaclePool = new ObstaclePoolManager(this);
+
+		// create collider for destroying obstacles
+		this.obstacleDespawner = this.physics.add.staticBody(
+			10,
+			0,
+			32,
+			this.scale.height,
+		);
+		this.physics.add.collider(
+			this.obstacleDespawner,
+			this.obstaclePool,
+			this.handleObstacleDespawn,
+			undefined,
+			this,
+		);
 
 		this.physics.world.on(
 			"worldbounds",
@@ -279,6 +301,20 @@ export default class PrototypeLevel extends Phaser.Scene {
 	 */
 	private handleGameState_RUNNING(_previousState: GameStates) {
 		this.startGame();
+	}
+
+	handleObstacleDespawn(
+		_despawner: ArcadeColliderObject,
+		obstacle: ArcadeColliderObject,
+	) {
+		if (!(obstacle instanceof Obstacle)) {
+			return;
+		}
+
+		if (this.obstaclePool.contains(obstacle)) {
+			this.obstaclePool.killAndHide(obstacle);
+		}
+		obstacle.body.reset(0, 0);
 	}
 
 	/**
@@ -354,6 +390,8 @@ export default class PrototypeLevel extends Phaser.Scene {
 
 		this.player.setData("isAlive", true);
 		this.player.setGravityY(PlayerGravity);
+
+		this.spawnObstacles();
 	}
 
 	/**
@@ -363,5 +401,61 @@ export default class PrototypeLevel extends Phaser.Scene {
 	 */
 	endGame() {
 		this.player.setData("isAlive", false);
+	}
+
+	/**
+	 * Handles obstacle spawning logic.
+	 */
+	spawnObstacles() {
+		// variables
+		const MINIMUM_GAP_SIZE: number = 64; // twice the player size
+		const MAXIMUM_GAP_SIZE: number = 96; // three times the player size
+		const MINIMUM_PADDING: number = 32; // minimum obstacle size at top|bottom
+		const OBSTACLE_HEIGHT: number = this.scale.height; // height of each obstacle
+		const OBSTACLE_SPEED: number = 20 * -1; // moving in the negative x direction
+		const SPAWN_DELAY: number = 5000;
+
+		// get spawn points
+		const gap = Phaser.Math.Between(MINIMUM_GAP_SIZE, MAXIMUM_GAP_SIZE);
+		/**
+		 * Space taken up by the gap and minimum visibility for the top and bottom
+		 * obstacles
+		 */
+		const reserved_space = MINIMUM_PADDING * 2 + gap;
+		const leftover_space = this.scale.height - reserved_space;
+		const top_space = Phaser.Math.Between(0, leftover_space);
+		const bottom_space = leftover_space - top_space;
+
+		const spawnX = this.scale.width - 20;
+		const spawnY = {
+			top: top_space + MINIMUM_PADDING - OBSTACLE_HEIGHT / 2,
+			bottom:
+				this.scale.height -
+				MINIMUM_PADDING -
+				bottom_space +
+				OBSTACLE_HEIGHT / 2,
+		};
+
+		// create obstacles
+		// place obstacles at their start position
+		// add velocity to the obstacles
+		const top: any = this.obstaclePool.getFirstDead(true);
+		if (top instanceof Obstacle) {
+			top.setPosition(spawnX, spawnY.top);
+			top.activate();
+			top.setVelocityX(OBSTACLE_SPEED);
+		}
+
+		const bottom: any = this.obstaclePool.getFirstDead(true);
+		if (bottom instanceof Obstacle) {
+			bottom.setPosition(spawnX, spawnY.bottom);
+			bottom.activate();
+			bottom.setVelocityX(OBSTACLE_SPEED);
+		}
+
+		// queue next obstacle spawn
+		this.time.delayedCall(SPAWN_DELAY, this.spawnObstacles, [], this);
+
+		console.log(this.obstaclePool.describe());
 	}
 }
