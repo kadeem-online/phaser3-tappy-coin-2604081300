@@ -61,6 +61,29 @@ class Obstacle extends Phaser.Physics.Arcade.Image {
 	) {
 		super(scene, x, y, texture, frame);
 	}
+
+	/**
+	 * Utility function that activates an obstacle. Only enables the obstacle and
+	 * its physics body in the scene. NOTE: should not actively apply effects such
+	 * as velocity, gravity and accelaration.
+	 */
+	activate() {
+		this.setActive(true);
+		this.setVisible(true);
+		this.body.setEnable(true);
+	}
+
+	/**
+	 * Utility function that deactivates an obstacle. Only disable the obstacle and
+	 * its physics body in the scene. NOTE: this method clears any active velocity
+	 * and accelaration on the body
+	 */
+	deactivate() {
+		this.setActive(false);
+		this.setVisible(false);
+		this.body.setEnable(false);
+		this.body.reset(0, 0);
+	}
 }
 
 /**
