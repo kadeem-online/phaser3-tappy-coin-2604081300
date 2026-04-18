@@ -220,7 +220,7 @@ export default class PrototypeLevel extends Phaser.Scene {
 
 		// create collider for destroying obstacles
 		this.obstacleDespawner = this.physics.add.staticBody(
-			10,
+			-75,
 			0,
 			32,
 			this.scale.height,
@@ -408,12 +408,12 @@ export default class PrototypeLevel extends Phaser.Scene {
 	 */
 	spawnObstacles() {
 		// variables
-		const MINIMUM_GAP_SIZE: number = 64; // twice the player size
-		const MAXIMUM_GAP_SIZE: number = 96; // three times the player size
+		const MINIMUM_GAP_SIZE: number = 32 * 1.75;
+		const MAXIMUM_GAP_SIZE: number = 32 * 2.5;
 		const MINIMUM_PADDING: number = 32; // minimum obstacle size at top|bottom
 		const OBSTACLE_HEIGHT: number = this.scale.height; // height of each obstacle
-		const OBSTACLE_SPEED: number = 20 * -1; // moving in the negative x direction
-		const SPAWN_DELAY: number = 5000;
+		const OBSTACLE_SPEED: number = 50 * -1; // moving in the negative x direction
+		const SPAWN_DELAY: number = 2500;
 
 		// get spawn points
 		const gap = Phaser.Math.Between(MINIMUM_GAP_SIZE, MAXIMUM_GAP_SIZE);
@@ -426,7 +426,7 @@ export default class PrototypeLevel extends Phaser.Scene {
 		const top_space = Phaser.Math.Between(0, leftover_space);
 		const bottom_space = leftover_space - top_space;
 
-		const spawnX = this.scale.width - 20;
+		const spawnX = this.scale.width + 50;
 		const spawnY = {
 			top: top_space + MINIMUM_PADDING - OBSTACLE_HEIGHT / 2,
 			bottom:
