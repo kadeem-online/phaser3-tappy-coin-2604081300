@@ -100,9 +100,6 @@ function obstalce_pool_manager_create_callback(
 	obstacle: Phaser.GameObjects.GameObject,
 ) {
 	if (obstacle instanceof Obstacle) {
-		obstacle.setVisible(false);
-		obstacle.setActive(false);
-		obstacle.body.enable = false;
 		obstacle.body.setImmovable(true);
 	}
 
