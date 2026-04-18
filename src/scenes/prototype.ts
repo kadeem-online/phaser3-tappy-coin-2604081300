@@ -233,6 +233,15 @@ export default class PrototypeLevel extends Phaser.Scene {
 			this,
 		);
 
+		// track collision between player and obstacles
+		this.physics.add.collider(
+			this.player,
+			this.obstaclePool,
+			this.handlePlayerObstacleCollisions,
+			undefined,
+			this,
+		);
+
 		this.physics.world.on(
 			"worldbounds",
 			this.handleWorldBoundsCollisions,
@@ -315,6 +324,20 @@ export default class PrototypeLevel extends Phaser.Scene {
 			this.obstaclePool.killAndHide(obstacle);
 		}
 		obstacle.body.reset(0, 0);
+	}
+
+	/**
+	 * Handles collisions between the player and obstacles.
+	 */
+	handlePlayerObstacleCollisions(
+		player: ArcadeColliderObject,
+		obstacle: ArcadeColliderObject,
+	) {
+		if (player === this.player && obstacle instanceof Obstacle) {
+			this.setGameState("POST_GAME");
+		}
+
+		return;
 	}
 
 	/**
